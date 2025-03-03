@@ -14,7 +14,8 @@ from singer_sdk.authenticators import (
 )
 
 import time
-import oauthlib.oauth1
+import random
+import hashlib
 from requests_oauthlib import OAuth1Session
 
 class AWSConnectClient:
@@ -169,14 +170,19 @@ class ConfigurableOAuth1Authenticator(OAuthAuthenticator):
             resource_owner_secret=access_token_secret
         )
 
+        def generate_nonce():
+            """Generate a unique nonce using a hash of a random number and timestamp."""
+            return hashlib.sha1(f"{random.randint(0, 1e9)}{time.time()}".encode()).hexdigest()
+
         return {
             "oauth_consumer_key": consumer_key,
             "oauth_token": access_token,
             "oauth_signature_method": "HMAC-SHA1",
             "oauth_timestamp": str(int(time.time())),
-            "oauth_nonce": oauthlib.oauth1.generate_nonce(),
+            "oauth_nonce": generate_nonce(),
             "oauth_version": "1.0"
         }
+
 
 
 def select_authenticator(self) -> Any:
