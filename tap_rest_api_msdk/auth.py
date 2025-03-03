@@ -13,6 +13,10 @@ from singer_sdk.authenticators import (
     OAuthAuthenticator,
 )
 
+import time
+import oauthlib.oauth1
+from requests_oauthlib import OAuth1Session
+
 class AWSConnectClient:
     """A connection class to AWS Resources."""
 
@@ -112,6 +116,19 @@ class AWSConnectClient:
         """
         return self.aws_session.client(self.aws_service, region_name=self.region)
 
+class OAuthAuthenticator:
+    """Base class for OAuth authentication."""
+    def __init__(self, config):
+        self.config = config
+        self.auth_headers = {}
+
+    def is_token_valid(self):
+        """Placeholder method to check token validity."""
+        return False
+
+    def update_access_token(self):
+        """Placeholder method to update access token."""
+        pass
 
 class ConfigurableOAuth1Authenticator(OAuthAuthenticator):
     """Configurable OAuth 1.0 Authenticator."""
@@ -145,7 +162,7 @@ class ConfigurableOAuth1Authenticator(OAuthAuthenticator):
         if not (consumer_key and consumer_secret and access_token and access_token_secret):
             raise ValueError("Missing required OAuth 1.0 parameters.")
 
-        self.oauth_session = OAuthAuthenticator(
+        self.oauth_session = OAuth1Session(
             client_key=consumer_key,
             client_secret=consumer_secret,
             resource_owner_key=access_token,
@@ -160,6 +177,7 @@ class ConfigurableOAuth1Authenticator(OAuthAuthenticator):
             "oauth_nonce": oauthlib.oauth1.generate_nonce(),
             "oauth_version": "1.0"
         }
+
 
 def select_authenticator(self) -> Any:
     """Call an appropriate SDK Authentication method.
