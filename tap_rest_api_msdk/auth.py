@@ -13,10 +13,13 @@ from singer_sdk.authenticators import (
     OAuthAuthenticator,
 )
 
+
 import time
 import random
 import hashlib
-from requests_oauthlib import OAuth1Session
+import hmac
+import base64
+import urllib.parse
 
 class AWSConnectClient:
     """A connection class to AWS Resources."""
@@ -117,71 +120,13 @@ class AWSConnectClient:
         """
         return self.aws_session.client(self.aws_service, region_name=self.region)
 
-class OAuthAuthenticator:
-    """Base class for OAuth authentication."""
-    def __init__(self, config):
-        self.config = config
-        self.auth_headers = {}
 
-    def is_token_valid(self):
-        """Placeholder method to check token validity."""
-        return False
-
-    def update_access_token(self):
-        """Placeholder method to update access token."""
-        pass
-
-class ConfigurableOAuth1Authenticator(OAuthAuthenticator):
-    """Configurable OAuth 1.0 Authenticator."""
-
-    def __init__(self, config):
-        super().__init__(config)
-        self.oauth_session = None
-
-    def get_initial_oauth_token(self):
-        """Get OAuth 1.0 token for authentication."""
-        if not self.is_token_valid():
-            self.update_access_token()
-
-        self.auth_headers["Authorization"] = self.oauth_session.auth.client.get_oauth_params()
-
-    @property
-    def oauth_request_body(self) -> dict:
-        """Build OAuth 1.0 parameters."""
-        if self.config:
-            my_config = self.config
-        elif self._config:
-            my_config = self._config
-        else:
-            raise ValueError("Missing configuration for OAuth 1.0.")
-
-        consumer_key = my_config.get("consumer_key")
-        consumer_secret = my_config.get("consumer_secret")
-        access_token = my_config.get("access_token")
-        access_token_secret = my_config.get("access_token_secret")
-
-        if not (consumer_key and consumer_secret and access_token and access_token_secret):
-            raise ValueError("Missing required OAuth 1.0 parameters.")
-
-        self.oauth_session = OAuth1Session(
-            client_key=consumer_key,
-            client_secret=consumer_secret,
-            resource_owner_key=access_token,
-            resource_owner_secret=access_token_secret
-        )
-
-        def generate_nonce():
-            """Generate a unique nonce using a hash of a random number and timestamp."""
-            return hashlib.sha1(f"{random.randint(0, 1e9)}{time.time()}".encode()).hexdigest()
-
-        return {
-            "oauth_consumer_key": consumer_key,
-            "oauth_token": access_token,
-            "oauth_signature_method": "HMAC-SHA1",
-            "oauth_timestamp": str(int(time.time())),
-            "oauth_nonce": generate_nonce(),
-            "oauth_version": "1.0"
-        }
+import time
+import random
+import hashlib
+import hmac
+import base64
+import urllib.parse
 
 
 
