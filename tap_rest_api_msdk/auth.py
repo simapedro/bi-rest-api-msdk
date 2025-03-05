@@ -17,8 +17,48 @@ import os
 from typing import Any
 import requests
 from requests_oauthlib import OAuth1
+from singer_sdk.authenticators import APIAuthenticatorBase
 
 
+class ConfigurableOAuthAuthenticator(APIAuthenticatorBase):
+    """Autenticador configurável para OAuth 1.0."""
+
+    def __init__(self, config: dict):
+        """Inicializa a autenticação OAuth 1.0."""
+        super().__init__(config)
+        
+        self.consumer_key = config.get("consumer_key")
+        self.consumer_secret = config.get("consumer_secret")
+        self.access_token = config.get("access_token")
+        self.token_secret = config.get("token_secret")
+
+        if not all([self.consumer_key, self.consumer_secret, self.access_token, self.token_secret]):
+            raise ValueError("As credenciais OAuth 1.0 estão incompletas.")
+
+        # Configura a autenticação OAuth 1.0
+        self.auth = OAuth1(
+            self.consumer_key,
+            self.consumer_secret,
+            self.access_token,
+            self.token_secret
+        )
+
+    def authenticate_request(self, request: requests.PreparedRequest) -> requests.PreparedRequest:
+        """Assina a requisição com OAuth 1.0."""
+        request.auth = self.auth
+        return request
+
+    @property
+    def auth_headers(self) -> dict:
+        """OAuth 1.0 usa assinatura na URL em vez de cabeçalhos diretos."""
+        return {}
+
+    def make_authenticated_request(self, url: str, method="GET", params=None, data=None) -> requests.Response:
+        """Faz uma requisição autenticada."""
+        response = requests.request(method, url, auth=self.auth, params=params, data=data)
+        response.raise_for_status()
+        return response
+    
 class AWSConnectClient:
     """A connection class to AWS Resources."""
 
