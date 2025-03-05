@@ -13,13 +13,11 @@ from singer_sdk.authenticators import (
     OAuthAuthenticator,
 )
 
+import os
+from typing import Any
+import requests
+from requests_oauthlib import OAuth1
 
-import time
-import random
-import hashlib
-import hmac
-import base64
-import urllib.parse
 
 class AWSConnectClient:
     """A connection class to AWS Resources."""
@@ -119,6 +117,59 @@ class AWSConnectClient:
 
         """
         return self.aws_session.client(self.aws_service, region_name=self.region)
+
+
+class OAuth1Authenticator(APIAuthenticatorBase):
+    """OAuth 1.0 Authenticator."""
+
+    def __init__(self, config: dict):
+        """Inicializa a autenticação OAuth 1.0."""
+        super().__init__(config)
+        self.consumer_key = config.get("consumer_key")
+        self.consumer_secret = config.get("consumer_secret")
+        self.access_token = config.get("access_token")
+        self.token_secret = config.get("token_secret")
+
+        if not all([self.consumer_key, self.consumer_secret, self.access_token, self.token_secret]):
+            raise ValueError("Todos os campos de autenticação OAuth 1.0 são obrigatórios.")
+
+        self.auth = OAuth1(
+            self.consumer_key,
+            self.consumer_secret,
+            self.access_token,
+            self.token_secret
+        )
+
+    def authenticate_request(self, request: requests.PreparedRequest) -> requests.PreparedRequest:
+        """Adiciona a autenticação OAuth 1.0 a uma solicitação."""
+        request.auth = self.auth
+        return request
+
+    @property
+    def auth_headers(self) -> dict:
+        """Retorna os headers OAuth 1.0 assinados."""
+        return {}  # A assinatura OAuth 1.0 não é enviada via headers diretos
+
+    def make_authenticated_request(self, url: str, method="GET", params=None, data=None) -> requests.Response:
+        """Faz uma solicitação autenticada com OAuth 1.0."""
+        response = requests.request(method, url, auth=self.auth, params=params, data=data)
+        response.raise_for_status()
+        return response
+
+
+# Exemplo de uso
+if __name__ == "__main__":
+    config = {
+        "consumer_key": "SUA_CONSUMER_KEY",
+        "consumer_secret": "SUA_CONSUMER_SECRET",
+        "access_token": "SEU_ACCESS_TOKEN",
+        "token_secret": "SEU_TOKEN_SECRET"
+    }
+
+    authenticator = OAuth1Authenticator(config)
+    response = authenticator.make_authenticated_request("https://api.example.com/protected-resource")
+    print(response.json())
+
 
 def select_authenticator(self) -> Any:
     """Call an appropriate SDK Authentication method.
@@ -237,69 +288,3 @@ def get_authenticator(self) -> Any:
     if auth_method == "aws":
         # Set the http_auth which is used in the Request call for AWS
         self.http_auth = self._authenticator
-
-class OAuthAuthenticator:
-    """Base class for OAuth authentication."""
-    def __init__(self, config):
-        self.config = config
-        self.auth_headers = {}
-
-    def is_token_valid(self):
-        """Placeholder method to check token validity."""
-        return False
-
-    def update_access_token(self):
-        """Placeholder method to update access token."""
-        pass
-
-class ConfigurableOAuth1Authenticator(OAuthAuthenticator):
-    """Configurable OAuth 1.0 Authenticator."""
-
-    def __init__(self, config):
-        super().__init__(config)
-
-    def get_initial_oauth_token(self):
-        """Get OAuth 1.0 token for authentication."""
-        if not self.is_token_valid():
-            self.update_access_token()
-
-        self.auth_headers["Authorization"] = self._generate_oauth_header()
-
-    def _generate_oauth_header(self):
-        """Generate the OAuth 1.0 Authorization header manually."""
-        oauth_params = self.oauth_request_body
-        sorted_params = sorted(oauth_params.items())
-        param_str = "&".join(f"{urllib.parse.quote(k, safe='')}={urllib.parse.quote(v, safe='')}" for k, v in sorted_params)
-        
-        return f"OAuth {', '.join(f'{k}="{v}"' for k, v in sorted_params)}"
-
-    @property
-    def oauth_request_body(self) -> dict:
-        """Build OAuth 1.0 parameters."""
-        if self.config:
-            my_config = self.config
-        elif self._config:
-            my_config = self._config
-        else:
-            raise ValueError("Missing configuration for OAuth 1.0.")
-
-        consumer_key = my_config.get("consumer_key")
-        consumer_secret = my_config.get("consumer_secret")
-        access_token = my_config.get("access_token")
-        access_token_secret = my_config.get("access_token_secret")
-
-        if not (consumer_key and consumer_secret and access_token and access_token_secret):
-            raise ValueError("Missing required OAuth 1.0 parameters.")
-
-        def generate_nonce():
-            """Generate a unique nonce using a hash of a random number and timestamp."""
-            return hashlib.sha1(f"{random.randint(0, 1e9)}{time.time()}".encode()).hexdigest()
-
-        return {
-            "oauth_consumer_key": consumer_key,
-            "oauth_token": access_token,
-            "oauth_signature_method": "HMAC-SHA1",
-            "oauth_timestamp": str(int(time.time())),
-            "oauth_nonce": generate_nonce(),
-            "oauth_version": "1.0"
-        }
