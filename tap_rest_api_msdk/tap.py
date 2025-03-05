@@ -13,6 +13,7 @@ from singer_sdk.helpers.jsonpath import extract_jsonpath
 from tap_rest_api_msdk.auth import ConfigurableOAuthAuthenticator, get_authenticator
 from tap_rest_api_msdk.streams import DynamicStream
 from tap_rest_api_msdk.utils import flatten_json
+from requests_oauthlib import OAuth1
 
 
 class TapRestApiMsdk(Tap):
