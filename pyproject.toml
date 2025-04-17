@@ -1,0 +1,56 @@
+[tool.poetry]
+name = "tap-rest-api-msdk"
+version = "1.4.1"
+description = "`tap-rest-api-msdk` is a Singer tap for REST APIs, built with the Meltano SDK for Singer Taps."
+authors = ["Josh Lloyd", "Fred Reimer"]
+keywords = [
+    "ELT",
+    "rest-api-msdk",
+    "Meltano",
+    "Singer",
+    "REST",
+    "API",
+    "tap"
+]
+license = "Apache 2.0"
+homepage = "https://github.com/Widen/tap-rest-api-msdk"
+repository = "https://github.com/Widen/tap-rest-api-msdk"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.8"
+requests = "^2.25.1"
+singer-sdk = { version = "^0.40.0", python = "<4" }
+genson = "^1.2.2"
+atomicwrites = "^1.4.0"
+requests-aws4auth = "^1.2.3"
+boto3 = "^1.26.156"
+
+[tool.poetry.dev-dependencies]
+pytest = "^8.2.2"
+tox = "^4.15.1"
+flake8 = { version = "^7.1.0", python = ">=3.8.1" }
+black = "^24.4.2"
+pydocstyle = "^6.3.0"
+mypy = "^1.10.0"
+types-requests = "^2.25.8"
+requests-mock = "^1.9.3"
+isort = "^5.13.2"
+types-python-dateutil = "^2.8.19.14"
+
+[tool.black]
+exclude = ".*simpleeval.*"
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3 # Vertical Hanging Indent
+src_paths = "singer_sdk"
+known_first_party = ["tests", "samples"]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+# CLI declaration
+tap-rest-api-msdk = 'tap_rest_api_msdk.tap:TapRestApiMsdk.cli'

@@ -1,0 +1,116 @@
+version: 1
+send_anonymous_usage_stats: false
+plugins:
+  extractors:
+    - name: tap-rest-api-msdk
+      namespace: tap_rest_api_msdk
+      executable: ./tap-rest-api-msdk.sh
+      capabilities:
+        - state
+        - catalog
+        - discover
+      settings:
+        - name: api_url
+          kind: string
+        - name: next_page_token_path
+          kind: string
+        - name: pagination_request_style
+          kind: string
+        - name: pagination_response_style
+          kind: string
+        - name: use_request_body_not_params
+          kind: boolean
+        - name: backoff_type
+          kind: string
+        - name: backoff_param
+          kind: string
+        - name: backoff_time_extension
+          kind: integer
+        - name: store_raw_json_message
+          kind: boolean
+        - name: pagination_page_size
+          kind: integer
+        - name: pagination_results_limit
+          kind: integer
+        - name: pagination_next_page_param
+          kind: string
+        - name: pagination_limit_per_page_param
+          kind: string
+        - name: pagination_total_limit_param
+          kind: string
+        - name: pagination_initial_offset
+          kind: integer
+        - name: streams
+          kind: array
+        - name: path
+          kind: string
+        - name: params
+          kind: object
+        - name: headers
+          kind: object
+        - name: records_path
+          kind: string
+        - name: primary_keys
+          kind: array
+        - name: replication_key
+          kind: string
+        - name: except_keys
+          kind: array
+        - name: num_inference_records
+          kind: integer
+        - name: start_date
+          kind: date_iso8601
+        - name: source_search_field
+          kind: string
+        - name: source_search_query
+          kind: string
+        - name: auth_method
+          kind: string
+        - name: api_key
+          kind: object
+        - name: client_id
+          kind: password
+        - name: client_secret
+          kind: password
+        - name: username
+          kind: string
+        - name: password
+          kind: password
+        - name: bearer_token
+          kind: password
+        - name: refresh_token
+          kind: oauth
+        - name: grant_type
+          kind: string
+        - name: scope
+          kind: string
+        - name: access_token_url
+          kind: string
+        - name: redirect_uri
+          kind: string
+        - name: oauth_extras
+          kind: object
+        - name: oauth_expiration_secs
+          kind: integer
+        - name: aws_credentials
+          kind: object
+      config:
+        api_url: https://earthquake.usgs.gov/fdsnws
+        records_path: "$.features[*]"
+        streams:
+          - name: us_earthquakes
+            path: /event/1/query
+            params:
+              format: geojson
+              starttime: "2014-01-01"
+              endtime: "2014-01-02"
+              minmagnitude: 1
+            primary_keys:
+              - id
+            num_inference_records: 100
+      select:
+        - '*.*'
+  loaders:
+    - name: target-jsonl
+      variant: andyh1203
+      pip_url: target-jsonl
