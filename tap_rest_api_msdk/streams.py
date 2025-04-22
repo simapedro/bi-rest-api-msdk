@@ -48,6 +48,7 @@ class DynamicStream(RestApiStream):
         name: str,
         records_path: str,
         path: str,
+        method: str = "POST",
         params: Optional[dict] = None,
         headers: Optional[dict] = None,
         primary_keys: Optional[list] = None,
@@ -80,6 +81,7 @@ class DynamicStream(RestApiStream):
             tap: see tap.py
             name: see tap.py
             path: see tap.py
+            method: see tap.py
             params: see tap.py
             headers: see tap.py
             primary_keys: see tap.py
@@ -114,6 +116,7 @@ class DynamicStream(RestApiStream):
 
         self.name = name
         self.path = path
+        self.method = method
         self.params = params if params else {}
         self.headers = headers
         self.assigned_authenticator = authenticator
