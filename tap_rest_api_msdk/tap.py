@@ -605,7 +605,7 @@ class TapRestApiMsdk(Tap):
             headers.update(getattr(self._authenticator, "auth_headers", {}))
             params.update(getattr(self._authenticator, "auth_params", {}))
 
-        r = requests.get(
+        r = requests.post(
             self.config["api_url"] + path,
             auth=self.http_auth,
             params=params,
