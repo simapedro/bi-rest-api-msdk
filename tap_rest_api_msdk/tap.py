@@ -608,7 +608,7 @@ class TapRestApiMsdk(Tap):
         r = requests.post(
             self.config["api_url"] + path,
             auth=self.http_auth,
-            params=params,
+            json=params,
             headers=headers,
         )
         if r.ok:
